@@ -15,7 +15,7 @@ A lightweight and reliable Watchdog script for monitoring mining rigs on Windows
 ## 🚀 Installation & Usage
 
 1. Download the `Mining-Listener.bat` file and place it in any folder.
-2. *(Optional)* For the screenshot feature to work, download the free `nircmd.exe` utility and place it in the same folder as the `.bat` file.
+2. (Optional) For the screenshot feature to work, download the free NirCmd utility archive from NirSoft. Extract all files from the .zip (nircmd.exe, nircmdc.exe, and nircmd.chm) and place them in the same folder as the .bat file.
 3. Open `Mining-Listener.bat` in any text editor (like Notepad) and configure the settings for your rig.
 4. Add a shortcut of the `.bat` file to your Windows Startup folder.
 
@@ -33,10 +33,11 @@ $BOOT_DELAY     = 60    # Delay on Windows startup in seconds (allows miner and 
 $MAX_TEMP       = 80    # CRITICAL Overheat temp (C) — triggers immediate reboot
 $TEMP_WARN      = 55    # Warning threshold (C) — temperature turns Yellow
 $TEMP_HOT       = 65    # Danger threshold (C) — temperature turns Red
+```
+
 📝 Log File Example (mining_problems_log.txt)
 Logs are kept compact and informative so you always know which GPU caused the crash:
-
-text
+```
 25.02.2026 11:45:10 - REBOOT! Working GPUs: 5 out of 6.
 --- GPU state before reboot ---
 0, NVIDIA P106-100, 100%, 55
@@ -46,19 +47,21 @@ text
 4, NVIDIA P106-100, 100%, 51
 5, NVIDIA P106-100, 100%, 50
 ----------------------------------------
-⚠️ Requirements
+```
+## ⚠️ Requirements
 OS: Windows 10 / 11
 
 Installed NVIDIA drivers (includes the required nvidia-smi.exe utility).
 
 PowerShell 5.1+ (Built into Windows 10 by default).
 
-⚖️ Third-Party Software License
+## ⚖️ Third-Party Software License
 This project uses the freeware utility NirCmd to capture screenshots.
 All rights to NirCmd belong to Nir Sofer (NirSoft). The utility is distributed "As Is" (Freeware) in accordance with the author's official license.
 Official website: https://www.nirsoft.net/utils/nircmd.html
 
-Легкий и надежный скрипт (Watchdog) для мониторинга майнинг-ферм на базе ОС Windows и видеокарт NVIDIA. Скрипт отслеживает загрузку графических процессоров (GPU Utilization) и их температуру, автоматически принимая меры (перезагрузка ПК) при зависании майнера, отвале видеокарт или критическом перегреве.
+# Mining-Listener
+ Легкий и надежный скрипт (Watchdog) для мониторинга майнинг-ферм на базе ОС Windows и видеокарт NVIDIA. Скрипт отслеживает загрузку графических процессоров (GPU Utilization) и их температуру, автоматически принимая меры (перезагрузка ПК) при зависании майнера, отвале видеокарт или критическом перегреве.
 
 ## ✨ Главные особенности
 
@@ -73,7 +76,7 @@ Official website: https://www.nirsoft.net/utils/nircmd.html
 ## 🚀 Установка и запуск
 
 1. Скачайте файл `Mining-Listener.bat` и поместите его в любую папку.
-2. (Опционально) Для работы функции скриншотов скачайте утилиту `nircmd.exe` (бесплатная утилита от NirSoft) и положите её в ту же папку, где находится батник.
+2. (Опционально) Для работы функции скриншотов скачайте архив с бесплатной утилитой NirCmd от NirSoft. Распакуйте все 3 файла из архива (nircmd.exe, nircmdc.exe и справку nircmd.chm) и положите их в ту же папку, где находится батник.
 3. Откройте `Mining-Listener.bat` в любом текстовом редакторе (например, Блокнот) и отредактируйте блок настроек под вашу ферму.
 4. Добавьте ярлык файла в автозагрузку Windows.
 
@@ -91,7 +94,9 @@ $BOOT_DELAY     = 60    # Задержка в секундах при старт
 $MAX_TEMP       = 80    # Температура ПЕРЕГРЕВА (C) — вызывает немедленную перезагрузку ПК
 $TEMP_WARN      = 55    # Порог предупреждения (C) — цвет температуры становится Жёлтым
 $TEMP_HOT       = 65    # Порог опасности (C) — цвет температуры становится Красным
-🛠 Как это работает (Логика)
+```
+
+## 🛠 Как это работает (Логика)
 Скрипт ждёт заданное время ($BOOT_DELAY) после старта Windows.
 
 В цикле опрашивает утилиту nvidia-smi на предмет нагрузки и температуры каждой карты.
@@ -110,8 +115,7 @@ $TEMP_HOT       = 65    # Порог опасности (C) — цвет тем�
 
 📝 Пример лог-файла (mining_problems_log.txt)
 Логи получаются компактными и информативными. Вы всегда будете знать, из-за какой карты произошел сбой:
-
-text
+```
 25.02.2026 11:45:10 - ПЕРЕЗАГРУЗКА! Работало карт: 5 из 6.
 --- Состояние карт перед перезагрузкой ---
 0, NVIDIA P106-100, 100%, 55
@@ -121,7 +125,8 @@ text
 4, NVIDIA P106-100, 100%, 51
 5, NVIDIA P106-100, 100%, 50
 ----------------------------------------
-⚠️ Требования
+```
+## ⚠️ Требования
 Операционная система: Windows 10 / 11
 
 Установленные драйверы NVIDIA (утилита nvidia-smi.exe поставляется вместе с ними).
