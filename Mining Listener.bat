@@ -1,21 +1,59 @@
 <# :
 @echo off
 setlocal
-mode con cols=41 lines=15
 set "SCRIPT_DIR=%~dp0"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression ([System.IO.File]::ReadAllText('%~f0'))"
 goto :eof
 #>
 
 # --- НАСТРОЙКИ ФЕРМЫ ---
-$EXPECTED_GPUS  = 6     # Сколько всего карт в риге
+$EXPECTED_GPUS  = 12    # Ожидаемое количество видеокарт
 $MIN_UTIL       = 80    # Минимальная загрузка в %
-$TIMEOUT_SEC    = 2     # Сколько секунд ждать ответа от карты
+$TIMEOUT_SEC    = 2     # Таймаут ответа карты (сек)
 $BOOT_DELAY     = 60    # Задержка при старте Windows (сек)
-$MAX_TEMP       = 80    # Температура перегрева — перезагрузка (C)
-$TEMP_WARN      = 55    # С этой температуры цвет станет жёлтым (C)
-$TEMP_HOT       = 65    # С этой температуры цвет станет красным (C)
+$MAX_TEMP       = 80    # Температура перегрева (C) — перезагрузка
+$TEMP_WARN      = 55    # Жёлтый цвет (C)
+$TEMP_HOT       = 65    # Красный цвет (C)
 
+# === ОТКЛЮЧЕНИЕ ПАУЗЫ ПРИ КЛИКЕ (QuickEdit Mode) ===
+$QuickEditSignature = @'
+using System;
+using System.Runtime.InteropServices;
+public static class ConsoleSettings {
+    const int STD_INPUT_HANDLE = -10;
+    const uint ENABLE_QUICK_EDIT = 0x0040;
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern IntPtr GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll")]
+    static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    [DllImport("kernel32.dll")]
+    static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+    public static void DisableQuickEdit() {
+        IntPtr consoleHandle = GetStdHandle(STD_INPUT_HANDLE);
+        uint consoleMode;
+        if (GetConsoleMode(consoleHandle, out consoleMode)) {
+            consoleMode &= ~ENABLE_QUICK_EDIT;
+            SetConsoleMode(consoleHandle, consoleMode);
+        }
+    }
+}
+'@
+try {
+    Add-Type -TypeDefinition $QuickEditSignature -Language CSharp
+    [ConsoleSettings]::DisableQuickEdit()
+} catch {}
+
+# === ДИНАМИЧЕСКОЕ РАЗМЕР ОКНА ===
+# 41 символ в ширину, а высота зависит от кол-ва карт (минимум 15)
+$calcLines = $EXPECTED_GPUS + 9
+$winLines  = [math]::Max(15, $calcLines)
+
+try {
+    $host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(41, $winLines)
+    $host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size(41, $winLines)
+} catch {}
+
+# Подготовка путей
 $CurrentDir = $env:SCRIPT_DIR.TrimEnd('\')
 $LogFile    = Join-Path $CurrentDir "mining_problems_log.txt"
 $StartTime  = Get-Date
@@ -37,7 +75,7 @@ function Take-Screenshot {
     elseif (Test-Path $Nircmdc) { $ExeToUse = $Nircmdc }
     if ($ExeToUse) {
         & $ExeToUse savescreenshot $FilePath
-        Write-Host "Скриншот сохранен: $FileName" -ForegroundColor Yellow
+        Write-Host "Скриншот: $FileName" -ForegroundColor Yellow
     } else {
         Write-Host "nircmd.exe не найден!" -ForegroundColor Red
     }
@@ -90,7 +128,7 @@ Wait-Compact -Seconds $BOOT_DELAY
 while ($true) {
     Clear-Host
     Write-Host "=========================================" -ForegroundColor Cyan
-    Write-Host "       MINING LISTENER V1.1              " -ForegroundColor Cyan
+    Write-Host "       MINING LISTENER V4.3              " -ForegroundColor Cyan
     Write-Host "=========================================" -ForegroundColor Cyan
 
     $smi = Find-NvidiaSmi
@@ -123,19 +161,17 @@ while ($true) {
                 $seenCount++
                 $totalUtil += $util
 
-                # УПРОЩЕННАЯ ЛОГИКА ЦВЕТОВ БЕЗ ФИГУРНЫХ СКОБОК (switch)
-                $tc = "Red"
-                switch ($temp) {
-                    { $_ -lt $TEMP_WARN } { $tc = "Green"; break }
-                    { $_ -lt $TEMP_HOT }  { $tc = "Yellow"; break }
+                # Цветовая логика температур
+                if ($temp -ge $TEMP_HOT) {
+                    $tc = "Red"
+                } elseif ($temp -ge $TEMP_WARN) {
+                    $tc = "Yellow"
+                } else {
+                    $tc = "Green"
                 }
 
-                # ПРОВЕРКА ПЕРЕГРЕВА БЕЗ ВЛОЖЕННОГО IF
-                switch ($temp) {
-                    { $_ -ge $MAX_TEMP } { $overHeatGpu = $i }
-                }
+                if ($temp -ge $MAX_TEMP) { $overHeatGpu = $i }
 
-                # ПРОСТОЙ ВЫВОД НАГРУЗКИ (как было в manual8)
                 if ($util -ge $MIN_UTIL) {
                     $goodCount++
                     Write-Host "GPU $i`: $util%   " -NoNewline -ForegroundColor Green
@@ -182,7 +218,6 @@ while ($true) {
 
     Write-Host "ПАДЕНИЕ НАГРУЗКИ / ОТВАЛ КАРТЫ!" -ForegroundColor White -BackgroundColor Red
 
-    # === ТРОЙНАЯ ПРОВЕРКА ИНТЕРНЕТА ===
     $ping1 = Test-Connection -ComputerName 8.8.8.8   -Count 2 -Quiet
     $ping2 = Test-Connection -ComputerName 1.1.1.1   -Count 2 -Quiet
     $ping3 = Test-Connection -ComputerName 77.88.8.8 -Count 2 -Quiet
@@ -235,3 +270,4 @@ while ($true) {
     Restart-Computer -Force
     exit
 }
+
