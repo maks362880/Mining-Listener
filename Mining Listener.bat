@@ -99,7 +99,11 @@ function Find-NvidiaSmi {
 function Wait-Compact($Seconds) {
     for ($i = $Seconds; $i -ge 0; $i--) {
         $Uptime = (Get-Date) - $StartTime
-        $UptStr = "{0:hh}:{0:mm}:{0:ss}" -f $Uptime
+        
+        $UptStr = ""
+        if ($Uptime.Days -gt 0) { $UptStr += "$($Uptime.Days)д " }
+        $UptStr += "$($Uptime.Hours.ToString('00')):$($Uptime.Minutes.ToString('00')):$($Uptime.Seconds.ToString('00'))"
+
         $Percent = 0
         if ($Seconds -gt 0) { $Percent = [math]::Round((($Seconds - $i) / $Seconds) * 100) }
         $BarLen = 25
@@ -128,7 +132,7 @@ Wait-Compact -Seconds $BOOT_DELAY
 while ($true) {
     Clear-Host
     Write-Host "=========================================" -ForegroundColor Cyan
-    Write-Host "       MINING LISTENER V4.3              " -ForegroundColor Cyan
+    Write-Host "       MINING LISTENER V1.3              " -ForegroundColor Cyan
     Write-Host "=========================================" -ForegroundColor Cyan
 
     $smi = Find-NvidiaSmi
@@ -270,4 +274,3 @@ while ($true) {
     Restart-Computer -Force
     exit
 }
-
